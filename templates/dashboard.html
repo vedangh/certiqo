@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>CertiQo - Dashboard</title>
+</head>
+<body>
+  <h1>Welcome, {{ name }}</h1>
+  <p>Your clients and deadlines will appear here.</p>
+
+  <form method="POST" action="{{ url_for('logout') }}">
+    <button type="submit">Log out</button>
+  </form>
+</body>
+</html>
