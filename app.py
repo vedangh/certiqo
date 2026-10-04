@@ -6,6 +6,7 @@ from flask import Flask, render_template, request, redirect, url_for, flash, ses
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
 from db import get_db
+from ai import draft_text, AIUnavailable
 
 load_dotenv()
 
@@ -340,5 +341,52 @@ def delete_task(client_id, task_id):
     conn.close()
     flash("Task deleted.")
     return redirect(url_for("tasks", client_id=client_id))
+@app.route("/clients/<int:client_id>/tasks/<int:task_id>/reminder", methods=["POST"])
+@login_required
+def draft_reminder(client_id, task_id):
+    conn = get_db()
+    cur = conn.cursor(dictionary=True)
+    cur.execute(
+        """
+        SELECT t.task_id, t.title, t.due_date,
+               c.client_id, c.name AS client_name, c.email AS client_email
+        FROM tasks t
+        JOIN clients c ON c.client_id = t.client_id
+        WHERE t.task_id = %s AND c.client_id = %s AND c.user_id = %s
+        """,
+        (task_id, client_id, session["user_id"]),
+    )
+    task = cur.fetchone()
+    cur.close()
+    conn.close()
+    if task is None:
+        abort(404)
+
+    due = task["due_date"].strftime("%d %B %Y")
+    ca_name = session["name"]
+
+    prompt = (
+        "Write a short, polite, professional email body from a Chartered Accountant "
+        f"named {ca_name} to a client named {task['client_name']}. "
+        f"Reminder: the task '{task['title']}' is due on {due}. "
+        "Ask the client to share any documents needed in good time. "
+        "Rules: under 80 words. Plain text, no subject line. "
+        "Use only the details given. Do not invent amounts, penalties, "
+        f"section numbers or legal claims. Sign off with the name {ca_name}."
+    )
+
+    try:
+        text = draft_text(prompt)
+        used_ai = True
+    except AIUnavailable:
+        text = (
+            f"Dear {task['client_name']},\n\n"
+            f"This is a reminder that '{task['title']}' is due on {due}. "
+            "Please share the required documents at your earliest convenience.\n\n"
+            f"Regards,\n{ca_name}"
+        )
+        used_ai = False
+
+    return render_template("reminder.html", task=task, text=text, used_ai=used_ai)
 if __name__ == "__main__":
     app.run(debug=True, port=5001)

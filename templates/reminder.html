@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>CertiQo - Reminder</title>
+</head>
+<body>
+  <h1>Reminder for {{ task.client_name }}</h1>
+  <p>Task: <strong>{{ task.title }}</strong> (due {{ task.due_date }})</p>
+
+  {% if used_ai %}
+    <p><em>Drafted by AI. Read and edit before using. Check every date and detail.</em></p>
+  {% else %}
+    <p><em>AI is busy right now, so this is a plain template. Edit as needed.</em></p>
+  {% endif %}
+
+  <textarea rows="10" cols="70">{{ text }}</textarea>
+
+  <p><a href="{{ url_for('tasks', client_id=task.client_id) }}">Back to tasks</a></p>
+</body>
+</html>

@@ -26,6 +26,12 @@
       <td>{{ t.status }}</td>
       <td>{{ t.notes or "" }}</td>
       <td>
+        {% if t.status == 'pending' %}
+        <form method="POST" style="display:inline"
+              action="{{ url_for('draft_reminder', client_id=client.client_id, task_id=t.task_id) }}">
+          <button type="submit">Draft reminder</button>
+        </form>
+        {% endif %}
         <form method="POST" style="display:inline"
               action="{{ url_for('toggle_task', client_id=client.client_id, task_id=t.task_id) }}">
           <button type="submit">{{ "Reopen" if t.status == 'done' else "Mark done" }}</button>
