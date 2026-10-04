@@ -6,8 +6,53 @@
 <body>
   <h1>Welcome, {{ name }}</h1>
   <p><a href="{{ url_for('clients') }}">My clients</a></p>
-  <p>Your deadlines will appear here.</p>
 
+  <h2>Overdue ({{ overdue|length }})</h2>
+  {% if overdue %}
+  <table border="1" cellpadding="6">
+    <tr><th>Client</th><th>Task</th><th>Due</th><th>Priority</th></tr>
+    {% for t in overdue %}
+    <tr>
+      <td><a href="{{ url_for('tasks', client_id=t.client_id) }}">{{ t.client_name }}</a></td>
+      <td>{{ t.title }}</td>
+      <td>{{ t.due_date }} ({{ -t.days }} day{{ "" if -t.days == 1 else "s" }} overdue)</td>
+      <td>{{ t.priority }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% else %}<p>Nothing overdue.</p>{% endif %}
+
+  <h2>Due in the next 7 days ({{ this_week|length }})</h2>
+  {% if this_week %}
+  <table border="1" cellpadding="6">
+    <tr><th>Client</th><th>Task</th><th>Due</th><th>Priority</th></tr>
+    {% for t in this_week %}
+    <tr>
+      <td><a href="{{ url_for('tasks', client_id=t.client_id) }}">{{ t.client_name }}</a></td>
+      <td>{{ t.title }}</td>
+      <td>{{ t.due_date }} ({{ "today" if t.days == 0 else "in " ~ t.days ~ " day" ~ ("" if t.days == 1 else "s") }})</td>
+      <td>{{ t.priority }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% else %}<p>Nothing due this week.</p>{% endif %}
+
+  <h2>Later ({{ later|length }})</h2>
+  {% if later %}
+  <table border="1" cellpadding="6">
+    <tr><th>Client</th><th>Task</th><th>Due</th><th>Priority</th></tr>
+    {% for t in later %}
+    <tr>
+      <td><a href="{{ url_for('tasks', client_id=t.client_id) }}">{{ t.client_name }}</a></td>
+      <td>{{ t.title }}</td>
+      <td>{{ t.due_date }}</td>
+      <td>{{ t.priority }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% else %}<p>No upcoming tasks.</p>{% endif %}
+
+  <br>
   <form method="POST" action="{{ url_for('logout') }}">
     <button type="submit">Log out</button>
   </form>

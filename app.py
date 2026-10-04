@@ -1,7 +1,7 @@
 import os
 from functools import wraps
 import mysql.connector
-from datetime import date
+from datetime import date, timedelta
 from flask import Flask, render_template, request, redirect, url_for, flash, session, abort
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
@@ -93,11 +93,46 @@ def logout():
     session.clear()
     return redirect(url_for("login"))
 
-
 @app.route("/dashboard")
 @login_required
 def dashboard():
-    return render_template("dashboard.html", name=session["name"])
+    conn = get_db()
+    cur = conn.cursor(dictionary=True)
+    cur.execute(
+        """
+        SELECT t.task_id, t.title, t.due_date, t.priority,
+               c.client_id, c.name AS client_name
+        FROM tasks t
+        JOIN clients c ON c.client_id = t.client_id
+        WHERE c.user_id = %s AND t.status = 'pending'
+        ORDER BY t.due_date, FIELD(t.priority, 'high', 'medium', 'low')
+        """,
+        (session["user_id"],),
+    )
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+
+    today = date.today()
+    week_end = today + timedelta(days=7)
+    overdue, this_week, later = [], [], []
+
+    for r in rows:
+        r["days"] = (r["due_date"] - today).days
+        if r["due_date"] < today:
+            overdue.append(r)
+        elif r["due_date"] <= week_end:
+            this_week.append(r)
+        else:
+            later.append(r)
+
+    return render_template(
+        "dashboard.html",
+        name=session["name"],
+        overdue=overdue,
+        this_week=this_week,
+        later=later,
+    )
 
 @app.route("/clients")
 @login_required
