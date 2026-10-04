@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>CertiQo - Tasks</title>
+</head>
+<body>
+  <h1>Tasks for {{ client.name }}</h1>
+  <p><a href="{{ url_for('clients') }}">Back to clients</a> |
+     <a href="{{ url_for('add_task', client_id=client.client_id) }}">Add task</a></p>
+
+  {% for message in get_flashed_messages() %}
+    <p>{{ message }}</p>
+  {% endfor %}
+
+  {% if tasks %}
+  <table border="1" cellpadding="6">
+    <tr><th>Task</th><th>Due</th><th>Priority</th><th>Status</th><th>Notes</th><th>Actions</th></tr>
+    {% for t in tasks %}
+    <tr>
+      <td>{{ t.title }}</td>
+      <td>
+        {{ t.due_date }}
+        {% if t.status == 'pending' and t.due_date < today %}<strong>(OVERDUE)</strong>{% endif %}
+      </td>
+      <td>{{ t.priority }}</td>
+      <td>{{ t.status }}</td>
+      <td>{{ t.notes or "" }}</td>
+      <td>
+        <form method="POST" style="display:inline"
+              action="{{ url_for('toggle_task', client_id=client.client_id, task_id=t.task_id) }}">
+          <button type="submit">{{ "Reopen" if t.status == 'done' else "Mark done" }}</button>
+        </form>
+        <form method="POST" style="display:inline"
+              action="{{ url_for('delete_task', client_id=client.client_id, task_id=t.task_id) }}"
+              onsubmit="return confirm('Delete this task?');">
+          <button type="submit">Delete</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% else %}
+    <p>No tasks yet for this client.</p>
+  {% endif %}
+</body>
+</html>

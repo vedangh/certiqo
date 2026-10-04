@@ -1,6 +1,7 @@
 import os
 from functools import wraps
 import mysql.connector
+from datetime import date
 from flask import Flask, render_template, request, redirect, url_for, flash, session, abort
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
@@ -201,5 +202,108 @@ def delete_client(client_id):
     conn.close()
     flash("Client deleted.")
     return redirect(url_for("clients"))
+def get_owned_client(client_id):
+    """Return the client only if it belongs to the logged-in CA, else 404."""
+    conn = get_db()
+    cur = conn.cursor(dictionary=True)
+    cur.execute(
+        "SELECT client_id, name FROM clients WHERE client_id = %s AND user_id = %s",
+        (client_id, session["user_id"]),
+    )
+    client = cur.fetchone()
+    cur.close()
+    conn.close()
+    if client is None:
+        abort(404)
+    return client
+
+
+@app.route("/clients/<int:client_id>/tasks")
+@login_required
+def tasks(client_id):
+    client = get_owned_client(client_id)
+
+    conn = get_db()
+    cur = conn.cursor(dictionary=True)
+    cur.execute(
+        """
+        SELECT task_id, title, due_date, status, priority, notes
+        FROM tasks
+        WHERE client_id = %s
+        ORDER BY status = 'done', due_date
+        """,
+        (client_id,),
+    )
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+    return render_template("tasks.html", client=client, tasks=rows, today=date.today())
+
+
+@app.route("/clients/<int:client_id>/tasks/add", methods=["GET", "POST"])
+@login_required
+def add_task(client_id):
+    client = get_owned_client(client_id)
+
+    if request.method == "POST":
+        title = request.form["title"].strip()
+        due_date = request.form["due_date"]
+        priority = request.form["priority"]
+        notes = request.form["notes"].strip()
+
+        if not title or not due_date or priority not in ("low", "medium", "high"):
+            flash("Title, due date and a valid priority are required.")
+            return render_template("task_form.html", client=client)
+
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute(
+            "INSERT INTO tasks (client_id, title, due_date, priority, notes) "
+            "VALUES (%s, %s, %s, %s, %s)",
+            (client_id, title, due_date, priority, notes or None),
+        )
+        conn.commit()
+        cur.close()
+        conn.close()
+        flash("Task added.")
+        return redirect(url_for("tasks", client_id=client_id))
+
+    return render_template("task_form.html", client=client)
+
+
+@app.route("/clients/<int:client_id>/tasks/<int:task_id>/toggle", methods=["POST"])
+@login_required
+def toggle_task(client_id, task_id):
+    get_owned_client(client_id)
+
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute(
+        "UPDATE tasks SET status = IF(status = 'done', 'pending', 'done') "
+        "WHERE task_id = %s AND client_id = %s",
+        (task_id, client_id),
+    )
+    conn.commit()
+    cur.close()
+    conn.close()
+    return redirect(url_for("tasks", client_id=client_id))
+
+
+@app.route("/clients/<int:client_id>/tasks/<int:task_id>/delete", methods=["POST"])
+@login_required
+def delete_task(client_id, task_id):
+    get_owned_client(client_id)
+
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute(
+        "DELETE FROM tasks WHERE task_id = %s AND client_id = %s",
+        (task_id, client_id),
+    )
+    conn.commit()
+    cur.close()
+    conn.close()
+    flash("Task deleted.")
+    return redirect(url_for("tasks", client_id=client_id))
 if __name__ == "__main__":
     app.run(debug=True, port=5001)
