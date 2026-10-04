@@ -5,7 +5,8 @@
 </head>
 <body>
   <h1>Welcome, {{ name }}</h1>
-  <p>Your clients and deadlines will appear here.</p>
+  <p><a href="{{ url_for('clients') }}">My clients</a></p>
+  <p>Your deadlines will appear here.</p>
 
   <form method="POST" action="{{ url_for('logout') }}">
     <button type="submit">Log out</button>

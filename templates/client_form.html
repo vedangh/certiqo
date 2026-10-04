@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>CertiQo - Client</title>
+</head>
+<body>
+  <h1>{{ "Edit client" if client else "Add client" }}</h1>
+
+  {% for message in get_flashed_messages() %}
+    <p>{{ message }}</p>
+  {% endfor %}
+
+  <form method="POST">
+    <label>Name</label><br>
+    <input type="text" name="name" value="{{ client.name if client else '' }}" required><br><br>
+
+    <label>Email</label><br>
+    <input type="email" name="email" value="{{ client.email or '' if client else '' }}"><br><br>
+
+    <label>Phone</label><br>
+    <input type="text" name="phone" value="{{ client.phone or '' if client else '' }}"><br><br>
+
+    <button type="submit">Save</button>
+    <a href="{{ url_for('clients') }}">Cancel</a>
+  </form>
+</body>
+</html>
