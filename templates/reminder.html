@@ -13,8 +13,33 @@
     <p><em>AI is busy right now, so this is a plain template. Edit as needed.</em></p>
   {% endif %}
 
-  <textarea rows="10" cols="70">{{ text }}</textarea>
+  <textarea id="body" rows="10" cols="70">{{ text }}</textarea>
+
+  <p>
+    <button type="button" id="copyBtn">Copy</button>
+    <a id="mailLink" href="#">Open in email app</a>
+  </p>
+  {% if not task.client_email %}
+    <p><em>No email saved for this client. Add one under Edit client to prefill the address.</em></p>
+  {% endif %}
 
   <p><a href="{{ url_for('tasks', client_id=task.client_id) }}">Back to tasks</a></p>
+
+  <script>
+    const email = {{ (task.client_email or "")|tojson }};
+    const subject = {{ ("Reminder: " ~ task.title ~ " due " ~ task.due_date.strftime('%d %B %Y'))|tojson }};
+    const box = document.getElementById("body");
+
+    document.getElementById("mailLink").addEventListener("click", function () {
+      this.href = "mailto:" + email +
+        "?subject=" + encodeURIComponent(subject) +
+        "&body=" + encodeURIComponent(box.value);
+    });
+
+    document.getElementById("copyBtn").addEventListener("click", function () {
+      navigator.clipboard.writeText(box.value);
+      this.textContent = "Copied";
+    });
+  </script>
 </body>
 </html>
