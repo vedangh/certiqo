@@ -1,60 +1,47 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>CertiQo - Dashboard</title>
-</head>
-<body>
-  <h1>Welcome, {{ name }}</h1>
-  <p><a href="{{ url_for('clients') }}">My clients</a></p>
-
-  <h2>Overdue ({{ overdue|length }})</h2>
-  {% if overdue %}
-  <table border="1" cellpadding="6">
-    <tr><th>Client</th><th>Task</th><th>Due</th><th>Priority</th></tr>
-    {% for t in overdue %}
-    <tr>
-      <td><a href="{{ url_for('tasks', client_id=t.client_id) }}">{{ t.client_name }}</a></td>
-      <td>{{ t.title }}</td>
-      <td>{{ t.due_date }} ({{ -t.days }} day{{ "" if -t.days == 1 else "s" }} overdue)</td>
-      <td>{{ t.priority }}</td>
-    </tr>
+{% extends "base.html" %}
+{% block title %}Dashboard - CertiQo{% endblock %}
+{% block content %}
+{% macro render(rows, kind) %}
+  {% if rows %}
+  <table>
+    <thead><tr><th>Client</th><th>Task</th><th>Due</th><th>Priority</th></tr></thead>
+    <tbody>
+    {% for t in rows %}
+      <tr>
+        <td><a href="{{ url_for('tasks', client_id=t.client_id) }}">{{ t.client_name }}</a></td>
+        <td>{{ t.title }}</td>
+        <td>
+          {{ t.due_date.strftime('%d %b %Y') }}
+          {% if kind == 'overdue' %}
+            <span class="muted">({{ -t.days }} day{{ '' if -t.days == 1 else 's' }} overdue)</span>
+          {% elif kind == 'week' %}
+            <span class="muted">({{ 'today' if t.days == 0 else 'in ' ~ t.days ~ ' day' ~ ('' if t.days == 1 else 's') }})</span>
+          {% endif %}
+        </td>
+        <td><span class="badge {{ t.priority }}">{{ t.priority }}</span></td>
+      </tr>
     {% endfor %}
+    </tbody>
   </table>
-  {% else %}<p>Nothing overdue.</p>{% endif %}
+  {% else %}
+    <p class="empty">Nothing here.</p>
+  {% endif %}
+{% endmacro %}
 
-  <h2>Due in the next 7 days ({{ this_week|length }})</h2>
-  {% if this_week %}
-  <table border="1" cellpadding="6">
-    <tr><th>Client</th><th>Task</th><th>Due</th><th>Priority</th></tr>
-    {% for t in this_week %}
-    <tr>
-      <td><a href="{{ url_for('tasks', client_id=t.client_id) }}">{{ t.client_name }}</a></td>
-      <td>{{ t.title }}</td>
-      <td>{{ t.due_date }} ({{ "today" if t.days == 0 else "in " ~ t.days ~ " day" ~ ("" if t.days == 1 else "s") }})</td>
-      <td>{{ t.priority }}</td>
-    </tr>
-    {% endfor %}
-  </table>
-  {% else %}<p>Nothing due this week.</p>{% endif %}
+<h1>Welcome, {{ name }}</h1>
 
-  <h2>Later ({{ later|length }})</h2>
-  {% if later %}
-  <table border="1" cellpadding="6">
-    <tr><th>Client</th><th>Task</th><th>Due</th><th>Priority</th></tr>
-    {% for t in later %}
-    <tr>
-      <td><a href="{{ url_for('tasks', client_id=t.client_id) }}">{{ t.client_name }}</a></td>
-      <td>{{ t.title }}</td>
-      <td>{{ t.due_date }}</td>
-      <td>{{ t.priority }}</td>
-    </tr>
-    {% endfor %}
-  </table>
-  {% else %}<p>No upcoming tasks.</p>{% endif %}
+<div class="stats">
+  <div class="stat red"><div class="num">{{ overdue|length }}</div><div class="label">Overdue</div></div>
+  <div class="stat amber"><div class="num">{{ this_week|length }}</div><div class="label">Due in 7 days</div></div>
+  <div class="stat blue"><div class="num">{{ later|length }}</div><div class="label">Later</div></div>
+</div>
 
-  <br>
-  <form method="POST" action="{{ url_for('logout') }}">
-    <button type="submit">Log out</button>
-  </form>
-</body>
-</html>
+<h2>Overdue</h2>
+{{ render(overdue, 'overdue') }}
+
+<h2>Due in the next 7 days</h2>
+{{ render(this_week, 'week') }}
+
+<h2>Later</h2>
+{{ render(later, 'later') }}
+{% endblock %}

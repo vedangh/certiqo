@@ -1,52 +1,48 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>CertiQo - Tasks</title>
-</head>
-<body>
+{% extends "base.html" %}
+{% block title %}Tasks - CertiQo{% endblock %}
+{% block content %}
+<div class="page-head">
   <h1>Tasks for {{ client.name }}</h1>
-  <p><a href="{{ url_for('clients') }}">Back to clients</a> |
-     <a href="{{ url_for('add_task', client_id=client.client_id) }}">Add task</a></p>
+  <a class="btn btn-primary" href="{{ url_for('add_task', client_id=client.client_id) }}">+ Add task</a>
+</div>
+<p class="muted"><a href="{{ url_for('clients') }}">&larr; Back to clients</a></p>
 
-  {% for message in get_flashed_messages() %}
-    <p>{{ message }}</p>
-  {% endfor %}
-
-  {% if tasks %}
-  <table border="1" cellpadding="6">
-    <tr><th>Task</th><th>Due</th><th>Priority</th><th>Status</th><th>Notes</th><th>Actions</th></tr>
-    {% for t in tasks %}
+{% if tasks %}
+<table>
+  <thead><tr><th>Task</th><th>Due</th><th>Priority</th><th>Status</th><th>Notes</th><th></th></tr></thead>
+  <tbody>
+  {% for t in tasks %}
     <tr>
       <td>{{ t.title }}</td>
       <td>
-        {{ t.due_date }}
-        {% if t.status == 'pending' and t.due_date < today %}<strong>(OVERDUE)</strong>{% endif %}
+        {{ t.due_date.strftime('%d %b %Y') }}
+        {% if t.status == 'pending' and t.due_date < today %}<span class="badge overdue">Overdue</span>{% endif %}
       </td>
-      <td>{{ t.priority }}</td>
-      <td>{{ t.status }}</td>
-      <td>{{ t.notes or "" }}</td>
-      <td>
+      <td><span class="badge {{ t.priority }}">{{ t.priority }}</span></td>
+      <td><span class="badge {{ t.status }}">{{ t.status }}</span></td>
+      <td class="muted">{{ t.notes or "" }}</td>
+      <td class="actions">
         {% if t.status == 'pending' %}
-        <form method="POST" style="display:inline"
+        <form method="POST" class="inline"
               action="{{ url_for('draft_reminder', client_id=client.client_id, task_id=t.task_id) }}">
-          <button type="submit">Draft reminder</button>
+          <button type="submit" class="btn btn-sm btn-primary">Draft reminder</button>
         </form>
         {% endif %}
-        <form method="POST" style="display:inline"
+        <form method="POST" class="inline"
               action="{{ url_for('toggle_task', client_id=client.client_id, task_id=t.task_id) }}">
-          <button type="submit">{{ "Reopen" if t.status == 'done' else "Mark done" }}</button>
+          <button type="submit" class="btn btn-sm">{{ "Reopen" if t.status == 'done' else "Mark done" }}</button>
         </form>
-        <form method="POST" style="display:inline"
+        <form method="POST" class="inline"
               action="{{ url_for('delete_task', client_id=client.client_id, task_id=t.task_id) }}"
               onsubmit="return confirm('Delete this task?');">
-          <button type="submit">Delete</button>
+          <button type="submit" class="btn btn-sm btn-danger">Delete</button>
         </form>
       </td>
     </tr>
-    {% endfor %}
-  </table>
-  {% else %}
-    <p>No tasks yet for this client.</p>
-  {% endif %}
-</body>
-</html>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+  <div class="card"><p class="empty">No tasks yet for this client.</p></div>
+{% endif %}
+{% endblock %}

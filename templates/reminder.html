@@ -1,45 +1,42 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>CertiQo - Reminder</title>
-</head>
-<body>
-  <h1>Reminder for {{ task.client_name }}</h1>
-  <p>Task: <strong>{{ task.title }}</strong> (due {{ task.due_date }})</p>
+{% extends "base.html" %}
+{% block title %}Reminder - CertiQo{% endblock %}
+{% block content %}
+<h1>Reminder for {{ task.client_name }}</h1>
+<p>Task: <strong>{{ task.title }}</strong> <span class="muted">(due {{ task.due_date.strftime('%d %b %Y') }})</span></p>
 
+<div class="card">
   {% if used_ai %}
-    <p><em>Drafted by AI. Read and edit before using. Check every date and detail.</em></p>
+    <p class="muted">Drafted by AI. Read and edit before using. Check every date and detail.</p>
   {% else %}
-    <p><em>AI is busy right now, so this is a plain template. Edit as needed.</em></p>
+    <p class="muted">AI is busy right now, so this is a plain template. Edit as needed.</p>
   {% endif %}
 
-  <textarea id="body" rows="10" cols="70">{{ text }}</textarea>
+  <textarea id="body" class="draft-box">{{ text }}</textarea>
 
-  <p>
-    <button type="button" id="copyBtn">Copy</button>
-    <a id="mailLink" href="#">Open in email app</a>
-  </p>
+  <div class="form-actions">
+    <button type="button" id="copyBtn" class="btn">Copy</button>
+    <a id="mailLink" class="btn btn-primary" href="#">Open in email app</a>
+    <a href="{{ url_for('tasks', client_id=task.client_id) }}">Back to tasks</a>
+  </div>
   {% if not task.client_email %}
-    <p><em>No email saved for this client. Add one under Edit client to prefill the address.</em></p>
+    <p class="muted">No email saved for this client. Add one under Edit client to prefill the address.</p>
   {% endif %}
+</div>
 
-  <p><a href="{{ url_for('tasks', client_id=task.client_id) }}">Back to tasks</a></p>
+<script>
+  const email = {{ (task.client_email or "")|tojson }};
+  const subject = {{ ("Reminder: " ~ task.title ~ " due " ~ task.due_date.strftime('%d %B %Y'))|tojson }};
+  const box = document.getElementById("body");
 
-  <script>
-    const email = {{ (task.client_email or "")|tojson }};
-    const subject = {{ ("Reminder: " ~ task.title ~ " due " ~ task.due_date.strftime('%d %B %Y'))|tojson }};
-    const box = document.getElementById("body");
+  document.getElementById("mailLink").addEventListener("click", function () {
+    this.href = "mailto:" + email +
+      "?subject=" + encodeURIComponent(subject) +
+      "&body=" + encodeURIComponent(box.value);
+  });
 
-    document.getElementById("mailLink").addEventListener("click", function () {
-      this.href = "mailto:" + email +
-        "?subject=" + encodeURIComponent(subject) +
-        "&body=" + encodeURIComponent(box.value);
-    });
-
-    document.getElementById("copyBtn").addEventListener("click", function () {
-      navigator.clipboard.writeText(box.value);
-      this.textContent = "Copied";
-    });
-  </script>
-</body>
-</html>
+  document.getElementById("copyBtn").addEventListener("click", function () {
+    navigator.clipboard.writeText(box.value);
+    this.textContent = "Copied";
+  });
+</script>
+{% endblock %}

@@ -1,38 +1,33 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>CertiQo - Clients</title>
-</head>
-<body>
+{% extends "base.html" %}
+{% block title %}Clients - CertiQo{% endblock %}
+{% block content %}
+<div class="page-head">
   <h1>My clients</h1>
-  <p><a href="{{ url_for('dashboard') }}">Dashboard</a> |
-     <a href="{{ url_for('add_client') }}">Add client</a></p>
+  <a class="btn btn-primary" href="{{ url_for('add_client') }}">+ Add client</a>
+</div>
 
-  {% for message in get_flashed_messages() %}
-    <p>{{ message }}</p>
-  {% endfor %}
-
-  {% if clients %}
-  <table border="1" cellpadding="6">
-    <tr><th>Name</th><th>Email</th><th>Phone</th><th>Actions</th></tr>
-    {% for c in clients %}
+{% if clients %}
+<table>
+  <thead><tr><th>Name</th><th>Email</th><th>Phone</th><th></th></tr></thead>
+  <tbody>
+  {% for c in clients %}
     <tr>
       <td>{{ c.name }}</td>
       <td>{{ c.email or "" }}</td>
       <td>{{ c.phone or "" }}</td>
-      <td>
-        <a href="{{ url_for('tasks', client_id=c.client_id) }}">Tasks</a> |
-        <a href="{{ url_for('edit_client', client_id=c.client_id) }}">Edit</a>
-        <form method="POST" action="{{ url_for('delete_client', client_id=c.client_id) }}"
-              style="display:inline" onsubmit="return confirm('Delete this client and all their tasks?');">
-          <button type="submit">Delete</button>
+      <td class="actions">
+        <a class="btn btn-sm" href="{{ url_for('tasks', client_id=c.client_id) }}">Tasks</a>
+        <a class="btn btn-sm" href="{{ url_for('edit_client', client_id=c.client_id) }}">Edit</a>
+        <form method="POST" action="{{ url_for('delete_client', client_id=c.client_id) }}" class="inline"
+              onsubmit="return confirm('Delete this client and all their tasks?');">
+          <button type="submit" class="btn btn-sm btn-danger">Delete</button>
         </form>
       </td>
     </tr>
-    {% endfor %}
-  </table>
-  {% else %}
-    <p>No clients yet. Add your first one.</p>
-  {% endif %}
-</body>
-</html>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+  <div class="card"><p class="empty">No clients yet. Add your first one.</p></div>
+{% endif %}
+{% endblock %}

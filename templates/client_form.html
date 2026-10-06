@@ -1,27 +1,19 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>CertiQo - Client</title>
-</head>
-<body>
+{% extends "base.html" %}
+{% block title %}Client - CertiQo{% endblock %}
+{% block content %}
+<div class="card narrow">
   <h1>{{ "Edit client" if client else "Add client" }}</h1>
-
-  {% for message in get_flashed_messages() %}
-    <p>{{ message }}</p>
-  {% endfor %}
-
   <form method="POST">
-    <label>Name</label><br>
-    <input type="text" name="name" value="{{ client.name if client else '' }}" required><br><br>
-
-    <label>Email</label><br>
-    <input type="email" name="email" value="{{ client.email or '' if client else '' }}"><br><br>
-
-    <label>Phone</label><br>
-    <input type="text" name="phone" value="{{ client.phone or '' if client else '' }}"><br><br>
-
-    <button type="submit">Save</button>
-    <a href="{{ url_for('clients') }}">Cancel</a>
+    <label>Name</label>
+    <input type="text" name="name" value="{{ client.name if client else '' }}" required>
+    <label>Email</label>
+    <input type="email" name="email" value="{{ client.email or '' if client else '' }}">
+    <label>Phone</label>
+    <input type="text" name="phone" value="{{ client.phone or '' if client else '' }}">
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">Save</button>
+      <a href="{{ url_for('clients') }}">Cancel</a>
+    </div>
   </form>
-</body>
-</html>
+</div>
+{% endblock %}

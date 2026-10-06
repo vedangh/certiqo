@@ -1,25 +1,17 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>CertiQo - Login</title>
-</head>
-<body>
-  <h1>Log in to CertiQo</h1>
-
-  {% for message in get_flashed_messages() %}
-    <p>{{ message }}</p>
-  {% endfor %}
-
+{% extends "base.html" %}
+{% block title %}Log in - CertiQo{% endblock %}
+{% block content %}
+<div class="card narrow">
+  <h1>Log in</h1>
   <form method="POST">
-    <label>Email</label><br>
-    <input type="email" name="email" required><br><br>
-
-    <label>Password</label><br>
-    <input type="password" name="password" required><br><br>
-
-    <button type="submit">Log in</button>
+    <label>Email</label>
+    <input type="email" name="email" required>
+    <label>Password</label>
+    <input type="password" name="password" required>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">Log in</button>
+      <span class="muted">No account? <a href="{{ url_for('register') }}">Register</a></span>
+    </div>
   </form>
-
-  <p>No account? <a href="{{ url_for('register') }}">Register</a></p>
-</body>
-</html>
+</div>
+{% endblock %}
